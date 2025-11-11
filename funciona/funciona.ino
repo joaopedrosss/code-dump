@@ -2,16 +2,13 @@
 //
 #include <LiquidCrystal.h>
 
-/*
-Link do projeto (diferente da simulacao):
-https://www.tinkercad.com/things/fuzK10t6Juq-pump-jmj/editel?returnTo=%2Fthings%2FfuzK10t6Juq-pump-jmj%3Fsharecode%3DZ_Ms8Wja-3LT8w22mTiTNjF7CL8jRZG00pj-otVT4d0
-*/
 
 
-const int trigPin = 9;
+
+const int trigPin = 8;
 const int echoPin = 10;
 const int motorPin = 6;
-const float altura_total = 103; // em cm
+float altura_total = 14.95; // em cm
 
 const int rs_pin = 12;
 const int enable_pin = 11;
@@ -20,8 +17,6 @@ const int d5 = 4;
 const int d6 = 3;
 const int d7 = 2;
 
-int velocidadeMotor = 0;
-
 //LiquidCrystal meu_lcd(12,11,5,4,3,2);
 LiquidCrystal meu_lcd(rs_pin,enable_pin,d4,d5,d6,d7);
 
@@ -29,7 +24,7 @@ LiquidCrystal meu_lcd(rs_pin,enable_pin,d4,d5,d6,d7);
 
 float duration, distance, nivel_atual;
 
-float margem = 3.00;
+float margem = 9.26;
 
 int motorLigado = 0; 
 
@@ -44,20 +39,20 @@ void setup()
   // O display LCD tem 16 colunas e 2 linhas
   meu_lcd.begin(16,2);
   
-  meu_lcd.print("Status:");
+  meu_lcd.print("Nivel atual (%):");
   
   // Comunicacao serial
   Serial.begin(9600);
-  
+   altura_total -= margem;
 }
 
 void loop()
 {
+  //analogWrite(motorPin,10);
   
-  analogWrite(motorPin, velocidadeMotor);
+  //analogWrite(motorPin, 240);
 
-  /* 
-  Sensor de distância(HC-SR04)
+  /* Funcionamento do sonar (HC-SR04)
     
 
     Inicialmente, o pino 'trig', responsavel pela emissao do sinal de som, não emite nada. Portanto, 'trigPin' é 0 (LOW).
@@ -94,49 +89,48 @@ void loop()
   
   duration = pulseIn(echoPin, HIGH);
   
-  distance = (duration*0.0343)/2; 
+  distance = (duration*0.0343)/2;
+  Serial.print("distancia_original: ");
+  Serial.print(distance);
+  Serial.print(" alt: ");
 
   distance -= margem;
-
-
-  if (distance < 0){ // guard para garantir que estamos trabalhando com niveis adequados de profundidda
-  	distance = 0;
-  }
   
-  //nivel_atual = (1 - distance/altura_total)*100;
+  //distance -= margem;
+ 
 
-  nivel_atual = 40;
+  distance = abs(distance);
   
-  if (nivel_atual < 0){
-  	nivel_atual = 0;
-  }
+ 
   
-  
-  /* 
-  Ligar a bomba (motor CC)
-  */
+  //nivel_atual = (1 - (distance/altura_total))*100;
+  nivel_atual = abs((1 - abs((distance/altura_total)))*100);
 
-  if (motorLigado){ // O motor CC está ligado? Ajuste a velocidade da rotação a depender do nível atual da caixa d'água
+  //nivel_atual
+  
+  
+  
+  
+  //MOTOR
+  if (motorLigado){ // o motor CC esta ligado? faca isso
   	
     if(nivel_atual >= 60 && nivel_atual < 75){
-      velocidadeMotor = 128;
+      analogWrite(motorPin,64);
       
     }else if(nivel_atual >= 75){
-      //analogWrite(motorPin,10);
-      velocidadeMotor = 64;
+      analogWrite(motorPin,10);
     }
     
-    if(nivel_atual >= 90){
-      //analogWrite(motorPin,0);
-      velocidadeMotor = 0; // Desligar motor CC
+    if(nivel_atual >= 80){
+      analogWrite(motorPin,0);
       motorLigado = 0;
     }
     
     
-  
-  }else{ // Caso contrário,ligue o motor CC fo
+  }else{ // puts ta desligado? faca isso
     if (nivel_atual <= 10){
-      velocidadeMotor = 240; // ? rpm (? % do Duty Cicle) (? V de tensão média)
+      
+      	analogWrite(motorPin,200);// os pinos aguentam 2 V?
     	motorLigado = 1;
     }
     
@@ -144,26 +138,29 @@ void loop()
   
  
   
-  /* 
-  Mostrar informação no display LCD 
-  */
+  /* LCD */
   int nivel_formatado = (int)nivel_atual;
   meu_lcd.setCursor(0,1);
   meu_lcd.print(nivel_formatado);
-  meu_lcd.print("% cheio");
+  //meu_lcd.print(nivel_atual);
+  //meu_lcd.print(" cm");
   
 
-  /*
-  Comunicacao Serial
-  */
+  /* Comunicacao Serial*/
   
-  Serial.print("Vol:");
+  //Serial.print("Vol:");
   
-  Serial.print(nivel_formatado);
+  //Serial.print(nivel_formatado);
   
-  Serial.println("% cheio");
+  //Serial.print(nivel_formatado);
+  Serial.print(distance);
+  Serial.print(" total: ");
+  Serial.print(altura_total);
+  Serial.print(" - ");
+ // Serial.println("% cheio");
+  Serial.println(nivel_atual);
   
     
-  delay(100);
+  delay(250);
   
 }
