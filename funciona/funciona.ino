@@ -5,13 +5,13 @@
 
 
 
-const int trigPin = 8;
-const int echoPin = 10;
-const int motorPin = 6;
-float altura_total = 14.95; // em cm
+const int trigPin = 7;
+const int echoPin = 6;
+const int motorPin = 11;
+float altura_total = 15.40; // em cm
 
-const int rs_pin = 12;
-const int enable_pin = 11;
+const int rs_pin = 1;
+const int enable_pin = 0;
 const int d4 = 5;
 const int d5 = 4;
 const int d6 = 3;
@@ -24,7 +24,7 @@ LiquidCrystal meu_lcd(rs_pin,enable_pin,d4,d5,d6,d7);
 
 float duration, distance, nivel_atual;
 
-float margem = 9.26;
+float margem = 7.68;
 
 int motorLigado = 0; 
 
@@ -39,15 +39,14 @@ void setup()
   // O display LCD tem 16 colunas e 2 linhas
   meu_lcd.begin(16,2);
   
-  meu_lcd.print("Nivel atual (%):");
   
   // Comunicacao serial
   Serial.begin(9600);
-   altura_total -= margem;
 }
 
 void loop()
 {
+  meu_lcd.print("Nivel atual (%):");
   //analogWrite(motorPin,10);
   
   //analogWrite(motorPin, 240);
@@ -89,12 +88,11 @@ void loop()
   
   duration = pulseIn(echoPin, HIGH);
   
-  distance = (duration*0.0343)/2;
+  distance = ((duration*0.0343)/2);
   Serial.print("distancia_original: ");
+  float distance_margin = distance - margem;
   Serial.print(distance);
   Serial.print(" alt: ");
-
-  distance -= margem;
   
   //distance -= margem;
  
@@ -104,12 +102,11 @@ void loop()
  
   
   //nivel_atual = (1 - (distance/altura_total))*100;
-  nivel_atual = abs((1 - abs((distance/altura_total)))*100);
+  nivel_atual = abs((1 - abs((distance_margin/(altura_total-margem))))*100);
 
   //nivel_atual
   
-  
-  
+
   
   //MOTOR
   if (motorLigado){ // o motor CC esta ligado? faca isso
@@ -130,7 +127,7 @@ void loop()
   }else{ // puts ta desligado? faca isso
     if (nivel_atual <= 10){
       
-      	analogWrite(motorPin,200);// os pinos aguentam 2 V?
+      	analogWrite(motorPin,100);// os pinos aguentam 2 V?
     	motorLigado = 1;
     }
     
@@ -153,14 +150,18 @@ void loop()
   //Serial.print(nivel_formatado);
   
   //Serial.print(nivel_formatado);
-  Serial.print(distance);
+  Serial.print(distance_margin);
   Serial.print(" total: ");
   Serial.print(altura_total);
   Serial.print(" - ");
  // Serial.println("% cheio");
-  Serial.println(nivel_atual);
+  Serial.print(nivel_atual);
+  Serial.print(" ; Status do motor:");
+  Serial.println(motorLigado);
+
   
+ 
     
   delay(250);
-  
+  meu_lcd.clear();
 }
